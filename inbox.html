@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gmail Inbox</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #fff;
+    width: 390px;
+    height: 844px;
+    overflow: hidden;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* iOS Status Bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 0 24px;
+    height: 54px;
+    background: #fff;
+  }
+  .status-bar .time {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .status-bar .icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-bar .icons svg { height: 13px; }
+
+  /* Search Bar */
+  .search-bar-container {
+    padding: 8px 16px 8px 16px;
+    background: #fff;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: #e9eef6;
+    border-radius: 28px;
+    padding: 10px 12px;
+    gap: 12px;
+    height: 48px;
+  }
+  .search-bar .hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 2px;
+  }
+  .search-bar .hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #444;
+    border-radius: 1px;
+  }
+  .search-bar .search-text {
+    flex: 1;
+    font-size: 16px;
+    color: #1f1f1f;
+    letter-spacing: 0.1px;
+  }
+  .search-bar .profile-pic {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #4285f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Category Tabs */
+  .category-tabs {
+    display: flex;
+    padding: 0 16px;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .category-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .category-tab.active {
+    background: #d3e3fd;
+    color: #001d35;
+  }
+  .category-tab.inactive {
+    background: #f0f0f0;
+    color: #444;
+  }
+  .category-tab .tab-icon {
+    font-size: 16px;
+  }
+  .tab-badge {
+    background: #d93025;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 8px;
+    margin-left: 2px;
+  }
+
+  /* Email List */
+  .email-list {
+    overflow-y: auto;
+    height: calc(844px - 54px - 64px - 40px - 82px);
+  }
+
+  .email-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 16px;
+    gap: 12px;
+    position: relative;
+  }
+  .email-item.unread .sender-name { font-weight: 700; color: #1f1f1f; }
+  .email-item.unread .email-subject { font-weight: 700; color: #1f1f1f; }
+  .email-item.unread .email-time { font-weight: 700; color: #1f1f1f; }
+  .email-item.read .sender-name { font-weight: 400; color: #5f6368; }
+  .email-item.read .email-subject { font-weight: 400; color: #5f6368; }
+  .email-item.read .email-preview { color: #80868b; }
+  .email-item.read .email-time { color: #80868b; }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .email-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .email-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .sender-name {
+    font-size: 15px;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .email-time {
+    font-size: 12px;
+    white-space: nowrap;
+    margin-left: 8px;
+    color: #5f6368;
+  }
+
+  .email-subject {
+    font-size: 14px;
+    color: #1f1f1f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .email-preview {
+    font-size: 14px;
+    color: #5f6368;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .email-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .star-icon {
+    color: #c4c7c5;
+    font-size: 20px;
+    margin-top: 18px;
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+  }
+
+  /* Bottom Tab Bar */
+  .bottom-tabs {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #f6f8fc;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 28px 0;
+    height: 82px;
+  }
+  .bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #80868b;
+    position: relative;
+  }
+  .bottom-tab.active {
+    color: #001d35;
+  }
+  .bottom-tab .tab-icon-wrap {
+    width: 56px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    position: relative;
+  }
+  .bottom-tab.active .tab-icon-wrap {
+    background: #d3e3fd;
+  }
+  .bottom-tab svg { width: 22px; height: 22px; }
+  .bottom-tab .badge {
+    position: absolute;
+    top: -2px;
+    right: 4px;
+    background: #d93025;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #c2e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .fab svg { width: 24px; height: 24px; }
+
+  /* Unread dot */
+  .unread-dot {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+    background: #1a73e8;
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- iOS Status Bar -->
+<div class="status-bar">
+  <div class="time">10:47</div>
+  <div class="icons">
+    <svg viewBox="0 0 18 12" fill="#1f1f1f"><rect x="0" y="3" width="3" height="9" rx="0.5" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="0.5" opacity="0.5"/><rect x="8" y="1" width="3" height="11" rx="0.5" opacity="0.7"/><rect x="12" y="0" width="3" height="12" rx="0.5"/></svg>
+    <svg viewBox="0 0 16 12" fill="#1f1f1f"><path d="M8 3.6c1.8 0 3.4.7 4.6 1.9l1.4-1.4C12.4 2.5 10.3 1.6 8 1.6S3.6 2.5 2 4.1l1.4 1.4C4.6 4.3 6.2 3.6 8 3.6zm0 3.2c1 0 2 .4 2.7 1.1L8 10.6 5.3 7.9C6 7.2 7 6.8 8 6.8z"/></svg>
+    <svg viewBox="0 0 27 13" fill="#1f1f1f"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="#1f1f1f" stroke-width="1" fill="none"/><rect x="23.5" y="4.5" width="2" height="4" rx="1" fill="#1f1f1f" opacity="0.4"/><rect x="2" y="3" width="16" height="7" rx="1" fill="#1f1f1f"/></svg>
+  </div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar-container">
+  <div class="search-bar">
+    <div class="hamburger"><span></span><span></span><span></span></div>
+    <div class="search-text">Search in mail</div>
+    <div class="profile-pic">J</div>
+  </div>
+</div>
+
+<!-- Category Tabs -->
+<div class="category-tabs">
+  <div class="category-tab active">
+    <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="#001d35"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    Primary
+    <span class="tab-badge">14</span>
+  </div>
+  <div class="category-tab inactive">
+    <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="#444"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10z"/></svg>
+    Promotions
+    <span class="tab-badge">28</span>
+  </div>
+  <div class="category-tab inactive">
+    <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="#444"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    Social
+    <span class="tab-badge">6</span>
+  </div>
+</div>
+
+<!-- Email List -->
+<div class="email-list">
+
+  <!-- Riley Gray — UNREAD -->
+  <div class="email-item unread">
+    <div class="avatar" style="background: #1e88e5;">R</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Riley Gray</span>
+        <span class="email-time">10:23 AM</span>
+      </div>
+      <div class="email-subject">Miss you brother</div>
+      <div class="email-preview">Some big news: my father finally croaked. No condolences needed. This means I finally have that money. And I want to make a...</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- LinkedIn -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #0077b5;">in</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">LinkedIn</span>
+        <span class="email-time">9:58 AM</span>
+      </div>
+      <div class="email-subject">You appeared in 4 searches this week</div>
+      <div class="email-preview">See who's looking at your profile and what they're interested in</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Mom -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #e57373;">M</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Mom</span>
+        <span class="email-time">9:14 AM</span>
+      </div>
+      <div class="email-subject">Easter this year</div>
+      <div class="email-preview">Hi honey, just checking if you and Samantha are coming for Easter. Dad wants to know how many chairs to get out of the...</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Chase -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #1565c0;">C</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Chase</span>
+        <span class="email-time">8:30 AM</span>
+      </div>
+      <div class="email-subject">Your statement is ready</div>
+      <div class="email-preview">Your March statement is now available. Log in to view your account details and recent transactions</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Marcus Webb -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #8e24aa;">M</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Marcus Webb</span>
+        <span class="email-time">7:45 AM</span>
+      </div>
+      <div class="email-subject">Re: Friday</div>
+      <div class="email-preview">Yeah that works. I'll grab the table at 8. Bring that whiskey you were talking about lol</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Google -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #4285f4;">G</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Google</span>
+        <span class="email-time">7:01 AM</span>
+      </div>
+      <div class="email-subject">Security alert</div>
+      <div class="email-preview">New sign-in to your Google Account on a Mac device. If this was you, no further action is needed</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Meg Delacroix -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #26a69a;">M</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Meg Delacroix</span>
+        <span class="email-time">Yesterday</span>
+      </div>
+      <div class="email-subject">Script notes</div>
+      <div class="email-preview">Hey John — finally got through the draft. I think the second act needs tightening but the ending is really strong. Call me...</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Spotify -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #1db954;">S</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Spotify</span>
+        <span class="email-time">Yesterday</span>
+      </div>
+      <div class="email-subject">Your Discover Weekly is here</div>
+      <div class="email-preview">30 songs picked just for you. Listen now and find your new favorite track this week</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Tom Huang -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #ef6c00;">T</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Tom Huang</span>
+        <span class="email-time">Yesterday</span>
+      </div>
+      <div class="email-subject">Moving next month</div>
+      <div class="email-preview">Hey man, so the lease is up May 1st and I'm heading to Austin. If you know anyone looking for a place let me know. Also do...</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Amazon -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #ff9800;">A</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Amazon</span>
+        <span class="email-time">Apr 5</span>
+      </div>
+      <div class="email-subject">Your order has shipped</div>
+      <div class="email-preview">Your package with 1 item is on the way. Expected delivery: Wednesday, April 9</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+  <!-- Dad -->
+  <div class="email-item read">
+    <div class="avatar" style="background: #5c6bc0;">D</div>
+    <div class="email-content">
+      <div class="email-top-row">
+        <span class="sender-name">Dad</span>
+        <span class="email-time">Apr 5</span>
+      </div>
+      <div class="email-subject">Fwd: Interesting article</div>
+      <div class="email-preview">Thought you might like this one. Your mother says hi. Don't forget Easter</div>
+    </div>
+    <span class="star-icon">☆</span>
+  </div>
+
+</div>
+
+<!-- Floating Action Button -->
+<div class="fab">
+  <svg viewBox="0 0 24 24">
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#073042"/>
+    <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#4285f4"/>
+  </svg>
+</div>
+
+<!-- Bottom Tab Bar -->
+<div class="bottom-tabs">
+  <div class="bottom-tab active">
+    <div class="tab-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="#001d35"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      <span class="badge">48</span>
+    </div>
+    <span>Mail</span>
+  </div>
+  <div class="bottom-tab">
+    <div class="tab-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="#80868b"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+    </div>
+    <span>Chat</span>
+  </div>
+  <div class="bottom-tab">
+    <div class="tab-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="#80868b"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
+    <span>Spaces</span>
+  </div>
+  <div class="bottom-tab">
+    <div class="tab-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="#80868b"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+    </div>
+    <span>Meet</span>
+  </div>
+</div>
+
+</body>
+</html>

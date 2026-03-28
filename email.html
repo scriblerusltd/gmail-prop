@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gmail - Riley's Email</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #fff;
+    width: 390px;
+    height: 844px;
+    overflow: hidden;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* iOS Status Bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 0 24px;
+    height: 54px;
+    background: #fff;
+  }
+  .status-bar .time {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .status-bar .icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-bar .icons svg { height: 13px; }
+
+  /* Top Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 8px;
+    height: 48px;
+    gap: 0;
+  }
+  .toolbar-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+  .toolbar-btn svg { width: 22px; height: 22px; fill: #5f6368; }
+  .toolbar-spacer { flex: 1; }
+
+  /* Subject */
+  .subject-area {
+    padding: 4px 20px 12px 20px;
+  }
+  .subject-text {
+    font-size: 22px;
+    font-weight: 400;
+    color: #1f1f1f;
+    line-height: 1.3;
+    letter-spacing: -0.2px;
+  }
+  .label-tag {
+    display: inline-block;
+    background: #e8eaed;
+    color: #5f6368;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* Sender Info */
+  .sender-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 20px 4px 20px;
+    gap: 12px;
+  }
+  .sender-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: #1e88e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .sender-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .sender-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .sender-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f1f1f;
+  }
+  .send-time {
+    font-size: 13px;
+    color: #80868b;
+  }
+  .to-line {
+    font-size: 13px;
+    color: #80868b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 1px;
+  }
+  .to-line .dropdown-arrow {
+    font-size: 10px;
+    color: #80868b;
+  }
+  .sender-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .sender-action-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sender-action-btn svg { width: 20px; height: 20px; fill: #5f6368; }
+
+  /* Email Body */
+  .email-body {
+    padding: 20px 20px 20px 72px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #1f1f1f;
+    letter-spacing: 0.1px;
+  }
+  .email-body p {
+    margin-bottom: 16px;
+  }
+  .email-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Reply Bar */
+  .reply-bar {
+    position: absolute;
+    bottom: 34px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+  }
+  .reply-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+    border: 1.5px solid #dadce0;
+    border-radius: 24px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f1f1f;
+    cursor: pointer;
+  }
+  .reply-btn svg { width: 18px; height: 18px; fill: #5f6368; }
+
+  /* Home indicator */
+  .home-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: #1f1f1f;
+    border-radius: 3px;
+  }
+
+  .star-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #c4c7c5;
+  }
+</style>
+</head>
+<body>
+
+<!-- iOS Status Bar -->
+<div class="status-bar">
+  <div class="time">10:48</div>
+  <div class="icons">
+    <svg viewBox="0 0 18 12" fill="#1f1f1f"><rect x="0" y="3" width="3" height="9" rx="0.5" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="0.5" opacity="0.5"/><rect x="8" y="1" width="3" height="11" rx="0.5" opacity="0.7"/><rect x="12" y="0" width="3" height="12" rx="0.5"/></svg>
+    <svg viewBox="0 0 16 12" fill="#1f1f1f"><path d="M8 3.6c1.8 0 3.4.7 4.6 1.9l1.4-1.4C12.4 2.5 10.3 1.6 8 1.6S3.6 2.5 2 4.1l1.4 1.4C4.6 4.3 6.2 3.6 8 3.6zm0 3.2c1 0 2 .4 2.7 1.1L8 10.6 5.3 7.9C6 7.2 7 6.8 8 6.8z"/></svg>
+    <svg viewBox="0 0 27 13" fill="#1f1f1f"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="#1f1f1f" stroke-width="1" fill="none"/><rect x="23.5" y="4.5" width="2" height="4" rx="1" fill="#1f1f1f" opacity="0.4"/><rect x="2" y="3" width="16" height="7" rx="1" fill="#1f1f1f"/></svg>
+  </div>
+</div>
+
+<!-- Top Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-btn">
+    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+  </div>
+  <div class="toolbar-spacer"></div>
+  <div class="toolbar-btn">
+    <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+  </div>
+  <div class="toolbar-btn">
+    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+  </div>
+  <div class="toolbar-btn">
+    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+  </div>
+  <div class="toolbar-btn">
+    <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+  </div>
+</div>
+
+<!-- Subject -->
+<div class="subject-area">
+  <span class="subject-text">Miss you brother</span>
+  <span class="label-tag">Inbox</span>
+</div>
+
+<!-- Sender Row -->
+<div class="sender-row">
+  <div class="sender-avatar">R</div>
+  <div class="sender-info">
+    <div class="sender-name-row">
+      <span class="sender-name">Riley Gray</span>
+      <span class="send-time">10:23 AM</span>
+    </div>
+    <div class="to-line">
+      to me <span class="dropdown-arrow">▼</span>
+    </div>
+  </div>
+  <div class="star-btn">☆</div>
+  <div class="sender-action-btn">
+    <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+  </div>
+  <div class="sender-action-btn">
+    <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+  </div>
+</div>
+
+<!-- Email Body -->
+<div class="email-body">
+  <p>John! Miss you brother.</p>
+  <p>Some big news: my father finally croaked. No condolences needed. This means I finally have that money. And I want to make a movie. Have any of your old script ideas laying around? Pls send them over if you can.</p>
+  <p>Coffee soon?</p>
+</div>
+
+<!-- Reply / Forward Bar -->
+<div class="reply-bar">
+  <div class="reply-btn">
+    <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+    Reply
+  </div>
+  <div class="reply-btn">
+    <svg viewBox="0 0 24 24"><path d="M7 8V5l-7 7 7 7v-3l-4-4 4-4zm6 1V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+    Reply all
+  </div>
+  <div class="reply-btn">
+    <svg viewBox="0 0 24 24" style="transform: scaleX(-1)"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+    Forward
+  </div>
+</div>
+
+<div class="home-indicator"></div>
+
+</body>
+</html>
