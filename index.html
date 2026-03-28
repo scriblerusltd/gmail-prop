@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gmail">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTIwIDRINGMtMS4xIDAtMiAuOS0yIDJ2MTJjMCAxLjEuOSAyIDIgMmgxNmMxLjEgMCAyLS45IDItMlY2YzAtMS4xLS45LTItMi0yem0wIDRsLTggNS04LTVWN2w4IDUgOC01djJ6IiBmaWxsPSIjZWEyMDI3Ii8+PC9zdmc+">
+<link rel="manifest" href="manifest.json">
+<title>Gmail</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #000000;
+    --bg-elevated: #111111;
+    --surface: #1f1f1f;
+    --search-bg: #282a2c;
+    --text-primary: #e3e3e3;
+    --text-white: #ffffff;
+    --text-secondary: #9aa0a6;
+    --text-tertiary: #71767a;
+    --divider: #333;
+    --accent-blue: #8ab4f8;
+    --accent-blue-bg: #004a77;
+    --chip-pdf-bg: #442c2c;
+    --chip-pdf-text: #f28b82;
+    --chip-doc-bg: #2a3544;
+    --chip-doc-text: #8ab4f8;
+    --chip-img-bg: #3a3020;
+    --chip-img-text: #fdd663;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100dvh;
+    width: 100vw;
+    position: relative;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ===== VIEWS ===== */
+  .inbox-view, .email-view {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .inbox-view {
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  }
+  .email-view {
+    z-index: 2;
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .email-view.active {
+    transform: translateX(0);
+    visibility: visible;
+  }
+  .inbox-view.pushed {
+    transform: translateX(-20%);
+    opacity: 0.3;
+  }
+
+  /* ===== SEARCH BAR (matches Gmail iOS exactly) ===== */
+  .search-container {
+    padding: calc(var(--safe-top) + 6px) 16px 4px 16px;
+    background: var(--bg);
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--search-bg);
+    border-radius: 28px;
+    padding: 0 8px 0 16px;
+    height: 50px;
+    gap: 0;
+  }
+  .hamburger {
+    display: flex; flex-direction: column; gap: 4.5px;
+    padding: 10px 12px 10px 0; cursor: pointer;
+  }
+  .hamburger span {
+    display: block; width: 18px; height: 1.5px;
+    background: var(--text-primary); border-radius: 1px;
+  }
+  .search-text {
+    flex: 1; font-size: 17px; color: var(--text-secondary);
+    padding-left: 2px;
+  }
+  .profile-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #7b1fa2;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 500;
+    margin-right: 4px;
+  }
+  .filter-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .filter-btn svg { width: 22px; height: 22px; fill: var(--text-primary); }
+
+  /* ===== INBOX LABEL ===== */
+  .inbox-label {
+    padding: 14px 20px 8px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.4px;
+  }
+
+  /* ===== EMAIL LIST ===== */
+  .email-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 100px;
+  }
+
+  .email-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 8px 12px 16px;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .email-item:active { background: rgba(255,255,255,0.05); }
+
+  .avatar {
+    width: 38px; height: 38px; min-width: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px; font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .email-content { flex: 1; min-width: 0; }
+
+  .email-row-1 {
+    display: flex; align-items: baseline; margin-bottom: 1px;
+  }
+  .sender-name {
+    font-size: 14px; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex-shrink: 1; min-width: 0;
+  }
+  .thread-count {
+    font-size: 14px; color: var(--text-secondary); font-weight: 400;
+    flex-shrink: 0; margin-left: 6px;
+  }
+  .email-meta {
+    display: flex; align-items: center; gap: 10px;
+    margin-left: auto; flex-shrink: 0; padding-left: 8px;
+  }
+  .email-time {
+    font-size: 12px; white-space: nowrap; color: var(--text-secondary);
+  }
+  .email-star {
+    font-size: 18px; color: #5f6368; line-height: 1;
+  }
+
+  .email-subject {
+    font-size: 13.5px; color: var(--text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+  .email-preview {
+    font-size: 13.5px; color: var(--text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+
+  /* Unread */
+  .email-item.unread .sender-name { font-weight: 600; color: var(--text-white); }
+  .email-item.unread .email-time { font-weight: 500; color: var(--text-primary); }
+  .email-item.unread .email-subject { font-weight: 500; color: var(--text-primary); }
+
+  /* Read */
+  .email-item.read .sender-name { font-weight: 400; }
+
+  /* ===== ATTACHMENT CHIPS (matches Gmail iOS dark mode exactly) ===== */
+  .attachment-chips {
+    display: flex; gap: 6px; margin-top: 7px;
+    align-items: center; overflow: hidden;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0;
+    padding: 5px 10px 5px 6px; border-radius: 14px;
+    font-size: 11.5px; font-weight: 500;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .chip-pdf { background: #3c2222; color: #f28b82; }
+  .chip-doc { background: #1e2d42; color: #8ab4f8; }
+  .chip-img { background: #2d3422; color: #81c995; }
+  /* File type icon: small rounded rect with type abbreviation */
+  .chip-ficon {
+    width: 20px; height: 20px; border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 800; letter-spacing: 0.2px;
+    margin-right: 5px; flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .chip-pdf .chip-ficon { background: #ea4335; color: #fff; }
+  .chip-doc .chip-ficon { background: #4285f4; color: #fff; }
+  .chip-img .chip-ficon { background: #34a853; color: #fff; }
+  .chip-overflow {
+    font-size: 12px; color: var(--text-tertiary); font-weight: 500;
+    flex-shrink: 0; padding-left: 2px;
+  }
+
+  /* ===== BOTTOM TABS ===== */
+  .bottom-tabs {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--divider);
+    display: flex; justify-content: space-around;
+    padding: 6px 0 calc(var(--safe-bottom) + 2px) 0;
+    z-index: 10;
+  }
+  .bottom-tab {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; font-size: 10.5px; color: var(--text-tertiary);
+    padding: 0 12px;
+  }
+  .bottom-tab.active { color: var(--accent-blue); }
+  .tab-icon-wrap {
+    width: 54px; height: 30px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: 15px; position: relative;
+  }
+  .bottom-tab.active .tab-icon-wrap { background: #1a3354; }
+  .bottom-tab.active svg { fill: var(--accent-blue); }
+  .bottom-tab svg { width: 22px; height: 22px; fill: var(--text-tertiary); }
+  .tab-badge {
+    position: absolute; top: -4px; right: -2px;
+    background: #d93025; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 5px; border-radius: 9px;
+    min-width: 18px; text-align: center;
+  }
+
+  /* ===== FAB ===== */
+  .fab {
+    position: fixed;
+    bottom: calc(72px + var(--safe-bottom));
+    right: 20px;
+    height: 52px; padding: 0 20px;
+    border-radius: 28px;
+    background: var(--accent-blue-bg);
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    z-index: 10; font-size: 15px; font-weight: 500;
+    color: var(--accent-blue);
+  }
+  .fab svg { width: 22px; height: 22px; fill: var(--accent-blue); }
+
+  /* ================================================================ */
+  /* EMAIL DETAIL VIEW                                                 */
+  /* ================================================================ */
+
+  .ev-toolbar {
+    display: flex; align-items: center;
+    padding: calc(var(--safe-top) + 4px) 4px 4px 4px;
+    min-height: calc(var(--safe-top) + 48px);
+    background: var(--bg);
+  }
+  .ev-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .ev-btn svg { width: 22px; height: 22px; fill: var(--text-secondary); }
+  .ev-spacer { flex: 1; }
+
+  /* Subject area */
+  .ev-subject-area {
+    padding: 2px 20px 14px 20px;
+  }
+  .ev-subject-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .ev-subject {
+    font-size: 20px; font-weight: 400; color: var(--text-white);
+    line-height: 1.35; letter-spacing: -0.2px; flex: 1;
+  }
+  .ev-label {
+    display: inline-block; background: #333; color: var(--text-secondary);
+    font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px;
+    margin-left: 6px; vertical-align: middle;
+    position: relative; top: -1px;
+  }
+  .ev-star {
+    font-size: 22px; color: #5f6368; margin-left: 12px;
+    flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* Sender row */
+  .ev-sender-row {
+    display: flex; align-items: flex-start;
+    padding: 12px 8px 12px 16px; gap: 12px;
+  }
+  .ev-avatar {
+    width: 38px; height: 38px; min-width: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px; font-weight: 400;
+  }
+  .ev-sender-info { flex: 1; min-width: 0; }
+  .ev-sender-name-row {
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .ev-sender-name { font-size: 15px; font-weight: 600; color: var(--text-white); }
+  .ev-send-time { font-size: 13px; color: var(--text-tertiary); }
+  .ev-to-line {
+    font-size: 13px; color: var(--text-tertiary);
+    display: flex; align-items: center; gap: 3px; margin-top: 2px;
+  }
+  .ev-sender-actions {
+    display: flex; gap: 0; flex-shrink: 0; align-items: center;
+  }
+  .ev-sender-actions .ev-btn { width: 40px; height: 40px; }
+  .ev-sender-actions .ev-btn svg { width: 20px; height: 20px; }
+
+  /* Email body — LEFT ALIGNED (not indented under avatar) */
+  .ev-body {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 24px 20px 20px 20px;
+    font-size: 15px; line-height: 1.65; color: var(--text-primary);
+    letter-spacing: 0.1px;
+  }
+  .ev-body p { margin-bottom: 18px; }
+  .ev-body p:last-child { margin-bottom: 0; }
+
+  /* Reply bar */
+  .ev-reply-bar {
+    padding: 10px 16px calc(var(--safe-bottom) + 12px) 16px;
+    display: flex; gap: 8px;
+    background: var(--bg);
+    border-top: 1px solid var(--divider);
+  }
+  .ev-reply-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 10px 0;
+    border: 1.5px solid #444; border-radius: 24px;
+    background: transparent; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  .ev-reply-btn svg { width: 16px; height: 16px; fill: var(--text-secondary); }
+
+  /* ===== FULL-SCREEN REPLY COMPOSE ===== */
+  .compose-view {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 5;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .compose-view.active {
+    transform: translateY(0);
+    visibility: visible;
+  }
+  .compose-toolbar {
+    display: flex; align-items: center;
+    padding: calc(var(--safe-top) + 4px) 8px 4px 8px;
+    min-height: calc(var(--safe-top) + 48px);
+    gap: 0;
+  }
+  .compose-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .compose-btn svg { width: 22px; height: 22px; fill: var(--text-secondary); }
+  .compose-toolbar .ev-spacer { flex: 1; }
+
+  .compose-recipient {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--divider);
+    font-size: 14px; color: var(--text-secondary);
+  }
+  .compose-recipient svg { width: 16px; height: 16px; fill: var(--text-tertiary); flex-shrink: 0; }
+  .compose-recipient .arrow { font-size: 10px; color: var(--text-tertiary); }
+  .compose-recipient .name { color: var(--text-primary); }
+
+  .compose-from {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--divider);
+    font-size: 14px; color: var(--text-tertiary);
+  }
+  .compose-from .addr { color: var(--text-secondary); }
+
+  .compose-subject-line {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--divider);
+    font-size: 15px; color: var(--text-primary);
+  }
+
+  .compose-body {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column;
+  }
+  .compose-textarea {
+    width: 100%; border: none; background: transparent;
+    color: var(--text-primary); font-family: inherit;
+    font-size: 15px; line-height: 1.6; resize: none;
+    outline: none; min-height: 120px;
+    padding: 14px 16px;
+    -webkit-user-select: text; user-select: text;
+  }
+  .compose-textarea::placeholder { color: var(--text-tertiary); }
+
+  .compose-quoted {
+    padding: 0 16px 20px 16px;
+    font-size: 13px; color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+  .compose-quoted-header {
+    margin-bottom: 8px;
+  }
+  .compose-quoted-body {
+    border-left: 3px solid #444;
+    padding-left: 12px;
+    color: var(--text-tertiary);
+  }
+  .compose-quoted-body p { margin-bottom: 6px; }
+  .compose-quoted-body p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- ===== INBOX VIEW ===== -->
+<div class="inbox-view" id="inboxView">
+
+  <div class="search-container">
+    <div class="search-bar">
+      <div class="hamburger"><span></span><span></span><span></span></div>
+      <div class="search-text">Search in mail</div>
+      <div class="profile-circle">J</div>
+      <div class="filter-btn">
+        <svg viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="inbox-label">Inbox</div>
+
+  <div class="email-list" id="emailList">
+
+    <!-- Riley Gray — UNREAD -->
+    <div class="email-item unread" onclick="openEmail()">
+      <div class="avatar" style="background:#1e88e5;">R</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Riley Gray</span>
+          <span class="email-meta">
+            <span class="email-time">10:23 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Miss you brother</div>
+        <div class="email-preview">Some big news: my father finally croaked. No ...</div>
+      </div>
+    </div>
+
+    <!-- Karen, me  4 -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#7b1fa2;">K</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Karen, me</span>
+          <span class="thread-count">3</span>
+          <span class="email-meta">
+            <span class="email-time">10:06 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Re: Dinner tomorrow?</div>
+        <div class="email-preview">Yep 7 works! I'll bring the wine. Do you want red or...</div>
+      </div>
+    </div>
+
+    <!-- noreply@dentist -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#1565c0;">n</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">noreply@smiledental.com</span>
+          <span class="email-meta">
+            <span class="email-time">9:48 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Appointment Reminder — Apr 14</div>
+        <div class="email-preview">Hi John, this is a reminder of your upcoming cleaning...</div>
+      </div>
+    </div>
+
+    <!-- Dave, me, Sam  7 -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#8e24aa;">D</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Dave, me, Sam</span>
+          <span class="thread-count">7</span>
+          <span class="email-meta">
+            <span class="email-time">9:18 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Re: Fantasy league draft picks</div>
+        <div class="email-preview">Dude you really took the Bengals in round 2? Lmao...</div>
+        <div class="attachment-chips">
+          <span class="chip chip-img"><span class="chip-ficon">IMG</span> draft_board_...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- me, Brenda, Tyler, Jess  12 -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#43a047;">B</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">me .. Brenda, Tyler, Jess...</span>
+          <span class="thread-count">12</span>
+          <span class="email-meta">
+            <span class="email-time">8:50 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Lake house this summer — who's in?</div>
+        <div class="email-preview">I can do July but not August. Also who's driving?...</div>
+        <div class="attachment-chips">
+          <span class="chip chip-pdf"><span class="chip-ficon">PDF</span> Lake-House-P...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- me, Jeff, Mom  5 -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#e65100;">J</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">me, Jeff, Mom</span>
+          <span class="thread-count">5</span>
+          <span class="email-meta">
+            <span class="email-time">7:33 PM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Dad's birthday gift ideas</div>
+        <div class="email-preview">What about that grill he keeps talking about? The Weber one...</div>
+        <div class="attachment-chips">
+          <span class="chip chip-img"><span class="chip-ficon">IMG</span> Screenshot 20...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mom -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#e57373;">M</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Mom</span>
+          <span class="email-meta">
+            <span class="email-time">4:22 PM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Don't forget to call Aunt Helen</div>
+        <div class="email-preview">She says she hasn't heard from you in weeks. Just give her a...</div>
+      </div>
+    </div>
+
+    <!-- DoorDash -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#ff3008;">D</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">DoorDash</span>
+          <span class="email-meta">
+            <span class="email-time">2:30 PM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Your order is on the way!</div>
+        <div class="email-preview">Your order from Chipotle is being prepared. Estimated...</div>
+      </div>
+    </div>
+
+    <!-- Marcus Webb -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#546e7a;">M</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Marcus Webb</span>
+          <span class="email-meta">
+            <span class="email-time">12:45 PM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Re: Friday</div>
+        <div class="email-preview">Yeah that works. I'll grab the table at 8. Bring that whiskey...</div>
+      </div>
+    </div>
+
+    <!-- Google -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#4285f4;">G</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Google</span>
+          <span class="email-meta">
+            <span class="email-time">11:01 AM</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Security alert</div>
+        <div class="email-preview">New sign-in to your Google Account on a Mac device...</div>
+      </div>
+    </div>
+
+    <!-- Spotify -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#1db954;">S</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Spotify</span>
+          <span class="email-meta">
+            <span class="email-time">Yesterday</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Your Discover Weekly is here</div>
+        <div class="email-preview">30 songs picked just for you. Listen now and find your new...</div>
+      </div>
+    </div>
+
+    <!-- Amazon -->
+    <div class="email-item read">
+      <div class="avatar" style="background:#ff9900;">a</div>
+      <div class="email-content">
+        <div class="email-row-1">
+          <span class="sender-name">Amazon</span>
+          <span class="email-meta">
+            <span class="email-time">Yesterday</span>
+            <span class="email-star">☆</span>
+          </span>
+        </div>
+        <div class="email-subject">Your order has shipped!</div>
+        <div class="email-preview">Your package with 1 item is on the way. Expected delivery Wed...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FAB -->
+  <div class="fab">
+    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+    Compose
+  </div>
+
+  <!-- Bottom Tabs -->
+  <div class="bottom-tabs">
+    <div class="bottom-tab active">
+      <div class="tab-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span class="tab-badge">48</span>
+      </div>
+      <span>Mail</span>
+    </div>
+    <div class="bottom-tab">
+      <div class="tab-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+      </div>
+      <span>Chat</span>
+    </div>
+    <div class="bottom-tab">
+      <div class="tab-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      </div>
+      <span>Spaces</span>
+    </div>
+    <div class="bottom-tab">
+      <div class="tab-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+      </div>
+      <span>Meet</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== EMAIL DETAIL VIEW ===== -->
+<div class="email-view" id="emailView">
+
+  <!-- Toolbar: back, spacer, pin, archive, delete, mail, more -->
+  <div class="ev-toolbar">
+    <div class="ev-btn" id="backBtn" onclick="closeEmail()">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    </div>
+    <div class="ev-spacer"></div>
+    <div class="ev-btn">
+      <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+    </div>
+    <div class="ev-btn">
+      <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </div>
+    <div class="ev-btn">
+      <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    </div>
+    <div class="ev-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    </div>
+  </div>
+
+  <!-- Subject with Inbox tag and star -->
+  <div class="ev-subject-area">
+    <div class="ev-subject-row">
+      <div>
+        <span class="ev-subject">Miss you brother</span>
+        <span class="ev-label">Inbox</span>
+      </div>
+      <span class="ev-star">☆</span>
+    </div>
+  </div>
+
+  <!-- Sender row: avatar, name+time, to me, reply arrow + three dots -->
+  <div class="ev-sender-row">
+    <div class="ev-avatar" style="background:#1e88e5;">R</div>
+    <div class="ev-sender-info">
+      <div class="ev-sender-name-row">
+        <span class="ev-sender-name">Riley Gray</span>
+        <span class="ev-send-time">10:23 AM</span>
+      </div>
+      <div class="ev-to-line">to me &middot;</div>
+    </div>
+    <div class="ev-sender-actions">
+      <div class="ev-btn">
+        <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+      </div>
+      <div class="ev-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email body — normal left alignment -->
+  <div class="ev-body" id="evBody">
+    <p>John! Miss you brother.</p>
+    <p>Some big news: my father finally croaked. No condolences needed. This means I finally have that money. And I want to make a movie. Have any of your old script ideas laying around? Pls send them over if you can.</p>
+    <p>Coffee soon?</p>
+  </div>
+
+  <!-- Reply buttons -->
+  <div class="ev-reply-bar" id="replyBar">
+    <div class="ev-reply-btn" onclick="openReply()">
+      <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+      Reply
+    </div>
+    <div class="ev-reply-btn" onclick="openReply()">
+      <svg viewBox="0 0 24 24"><path d="M7 8V5l-7 7 7 7v-3l-4-4 4-4zm6 1V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+      Reply all
+    </div>
+    <div class="ev-reply-btn">
+      <svg viewBox="0 0 24 24" style="transform:scaleX(-1)"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+      Forward
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ===== FULL-SCREEN COMPOSE VIEW ===== -->
+<div class="compose-view" id="composeView">
+
+  <div class="compose-toolbar">
+    <div class="compose-btn" onclick="closeReply()">
+      <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </div>
+    <div class="ev-spacer"></div>
+    <div class="compose-btn">
+      <svg viewBox="0 0 24 24"><path d="M5 17v2h4v-2H5zm0-8v2h10V9H5zm0 4v2h7v-2H5zm12.5.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5.22-.5.5-.5.5.22.5.5zM16 9l-4 4h3v4h2v-4h3L16 9z" fill-rule="evenodd"/></svg>
+    </div>
+    <div class="compose-btn">
+      <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+    </div>
+    <div class="compose-btn" onclick="sendReply()">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div class="compose-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    </div>
+  </div>
+
+  <div class="compose-recipient">
+    <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+    <span class="arrow">▾</span>
+    <span class="name">Riley Gray</span>
+  </div>
+
+  <div class="compose-from">
+    From&nbsp;&nbsp;<span class="addr">john.w@gmail.com</span>
+  </div>
+
+  <div class="compose-subject-line">Re: Miss you brother</div>
+
+  <div class="compose-body">
+    <textarea class="compose-textarea" id="replyTextarea" placeholder=""></textarea>
+    <div class="compose-quoted">
+      <div class="compose-quoted-header">On Mon, Apr 7 at 10:23 AM Riley Gray &lt;rileygray@gmail.com&gt; wrote:</div>
+      <div class="compose-quoted-body">
+        <p>John! Miss you brother.</p>
+        <p>Some big news: my father finally croaked. No condolences needed. This means I finally have that money. And I want to make a movie. Have any of your old script ideas laying around? Pls send them over if you can.</p>
+        <p>Coffee soon?</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const inboxView = document.getElementById('inboxView');
+  const emailView = document.getElementById('emailView');
+  const replyBar = document.getElementById('replyBar');
+  const composeView = document.getElementById('composeView');
+  const replyTextarea = document.getElementById('replyTextarea');
+
+  function openEmail() {
+    emailView.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    inboxView.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    emailView.style.transform = '';
+    emailView.classList.add('active');
+    inboxView.classList.add('pushed');
+  }
+
+  function closeEmail() {
+    emailView.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    inboxView.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    emailView.style.transform = '';
+    emailView.classList.remove('active');
+    inboxView.classList.remove('pushed');
+    inboxView.style.transform = '';
+    inboxView.style.opacity = '';
+    closeReply();
+  }
+
+  function openReply() {
+    composeView.classList.add('active');
+    setTimeout(() => replyTextarea.focus(), 200);
+  }
+
+  function closeReply() {
+    composeView.classList.remove('active');
+    replyTextarea.value = '';
+    replyTextarea.blur();
+  }
+
+  function sendReply() {
+    replyTextarea.value = '';
+    closeReply();
+  }
+
+  // === Swipe-back gesture ===
+  let startX = 0, startY = 0, tracking = false, decided = false, isHorizontal = false;
+
+  emailView.addEventListener('touchstart', (e) => {
+    // Only start tracking from left edge
+    const x = e.touches[0].clientX;
+    if (x > 35 || !emailView.classList.contains('active')) return;
+    // Don't interfere with textarea
+    if (e.target === replyTextarea) return;
+    startX = x;
+    startY = e.touches[0].clientY;
+    tracking = true;
+    decided = false;
+    isHorizontal = false;
+    emailView.style.transition = 'none';
+    inboxView.style.transition = 'none';
+  }, { passive: true });
+
+  emailView.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+
+    if (!decided) {
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        decided = true;
+        isHorizontal = Math.abs(dx) > Math.abs(dy);
+      }
+      return;
+    }
+    if (!isHorizontal) { tracking = false; return; }
+
+    const clamped = Math.max(0, dx);
+    const pct = clamped / window.innerWidth;
+    emailView.style.transform = `translateX(${clamped}px)`;
+    inboxView.style.transform = `translateX(${-20 + pct * 20}%)`;
+    inboxView.style.opacity = 0.3 + pct * 0.7;
+  }, { passive: true });
+
+  emailView.addEventListener('touchend', () => {
+    if (!tracking) return;
+    tracking = false;
+
+    // Read current position
+    const matrix = new DOMMatrix(getComputedStyle(emailView).transform);
+    const currentX = matrix.m41 || 0;
+
+    emailView.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+    inboxView.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease';
+
+    if (currentX > 100) {
+      // Complete the swipe — close
+      emailView.style.transform = `translateX(${window.innerWidth}px)`;
+      inboxView.style.transform = 'translateX(0)';
+      inboxView.style.opacity = '1';
+      setTimeout(() => {
+        emailView.classList.remove('active');
+        inboxView.classList.remove('pushed');
+        emailView.style.transform = '';
+        inboxView.style.transform = '';
+        inboxView.style.opacity = '';
+        closeReply();
+      }, 260);
+    } else {
+      // Snap back
+      emailView.style.transform = 'translateX(0)';
+      inboxView.style.transform = 'translateX(-20%)';
+      inboxView.style.opacity = '0.3';
+    }
+  });
+
+  // Don't capture touches on textarea or compose view
+  replyTextarea.addEventListener('touchstart', (e) => e.stopPropagation());
+  replyTextarea.addEventListener('touchmove', (e) => e.stopPropagation());
+  composeView.addEventListener('touchstart', (e) => e.stopPropagation());
+  composeView.addEventListener('touchmove', (e) => e.stopPropagation());
+</script>
+
+</body>
+</html>
