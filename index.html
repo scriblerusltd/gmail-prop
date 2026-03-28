@@ -190,34 +190,32 @@
   /* Read */
   .email-item.read .sender-name { font-weight: 400; }
 
-  /* ===== ATTACHMENT CHIPS (matches Gmail iOS dark mode exactly) ===== */
+  /* ===== ATTACHMENT CHIPS (Gmail iOS dark mode) ===== */
   .attachment-chips {
     display: flex; gap: 6px; margin-top: 7px;
     align-items: center; overflow: hidden;
   }
   .chip {
     display: inline-flex; align-items: center; gap: 0;
-    padding: 5px 10px 5px 6px; border-radius: 14px;
-    font-size: 11.5px; font-weight: 500;
+    padding: 4px 10px 4px 5px; border-radius: 14px;
+    font-size: 12px; font-weight: 500;
     white-space: nowrap; flex-shrink: 0;
+    height: 28px;
   }
-  .chip-pdf { background: #3c2222; color: #f28b82; }
+  .chip-pdf { background: #3d2020; color: #e8a0a0; }
+  .chip-img { background: #3d2020; color: #e8a0a0; }
   .chip-doc { background: #1e2d42; color: #8ab4f8; }
-  .chip-img { background: #2d3422; color: #81c995; }
-  /* File type icon: small rounded rect with type abbreviation */
   .chip-ficon {
-    width: 20px; height: 20px; border-radius: 3px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 7px; font-weight: 800; letter-spacing: 0.2px;
-    margin-right: 5px; flex-shrink: 0;
-    text-transform: uppercase;
+    width: 18px; height: 18px; border-radius: 3px;
+    display: inline-block;
+    margin-right: 6px; flex-shrink: 0;
   }
-  .chip-pdf .chip-ficon { background: #ea4335; color: #fff; }
-  .chip-doc .chip-ficon { background: #4285f4; color: #fff; }
-  .chip-img .chip-ficon { background: #34a853; color: #fff; }
+  .chip-pdf .chip-ficon { background: #ea4335; }
+  .chip-img .chip-ficon { background: #ea4335; }
+  .chip-doc .chip-ficon { background: #4285f4; }
   .chip-overflow {
     font-size: 12px; color: var(--text-tertiary); font-weight: 500;
-    flex-shrink: 0; padding-left: 2px;
+    flex-shrink: 0; padding-left: 4px;
   }
 
   /* ===== BOTTOM TABS ===== */
@@ -528,7 +526,7 @@
         <div class="email-subject">Re: Fantasy league draft picks</div>
         <div class="email-preview">Dude you really took the Bengals in round 2? Lmao...</div>
         <div class="attachment-chips">
-          <span class="chip chip-img"><span class="chip-ficon">IMG</span> draft_board_...</span>
+          <span class="chip chip-img"><span class="chip-ficon"></span> draft_board_...</span>
         </div>
       </div>
     </div>
@@ -548,7 +546,7 @@
         <div class="email-subject">Lake house this summer — who's in?</div>
         <div class="email-preview">I can do July but not August. Also who's driving?...</div>
         <div class="attachment-chips">
-          <span class="chip chip-pdf"><span class="chip-ficon">PDF</span> Lake-House-P...</span>
+          <span class="chip chip-pdf"><span class="chip-ficon"></span> Lake-House-P...</span>
         </div>
       </div>
     </div>
@@ -568,7 +566,7 @@
         <div class="email-subject">Dad's birthday gift ideas</div>
         <div class="email-preview">What about that grill he keeps talking about? The Weber one...</div>
         <div class="attachment-chips">
-          <span class="chip chip-img"><span class="chip-ficon">IMG</span> Screenshot 20...</span>
+          <span class="chip chip-img"><span class="chip-ficon"></span> Screenshot 20...</span>
         </div>
       </div>
     </div>
